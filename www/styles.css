@@ -1,3 +1,58 @@
+img{
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Table and cards */
+
+#table-box{
+  background-color: #00bb51;
+}
+
+.players{
+  text-align: center;
+}
+.player{
+  display: inline-block;
+  width: 12%;
+  margin-right: 7%;
+}
+.player:last-child{
+  margin: 0;
+}
+.player-inactive{
+  display: none;
+}
+
+#btn_deal{
+  display: none;
+}
+.cards{
+  margin-top: 100px;
+  margin-bottom: 100px;
+  text-align: center;
+}
+.card{
+  margin-right: 1px;
+  max-width: 15%;
+  box-shadow: 0 0 1px 1px #444;
+  background-color: #AAA;
+  border-radius: 15%;
+}
+
+.card-back{
+
+}
+
+.card-hidden{
+  visibility: hidden;
+}
+
+#deck{
+  box-shadow: 0 0 5px 4px #444;
+  cursor: pointer;
+}
+
 /* Sidebar */
 .skin-black .sidebar a,
 .skin-black .treeview-menu>li>a{
@@ -141,112 +196,6 @@ textarea{
 }
 .shiny-notification-error u{
   font-weight: bold;
-}
-
-/* Refresh Buttons */
-
-#mmm_dc_refresh, #mmm_exp_refresh, #mmm_val_refresh, #mmm_decomp_refresh{
-  width: 60px;
-  height: 60px;
-  background: transparent;
-  position: absolute;
-  border: none;
-  font-size: 0;
-}
-
-/* Explorer Tab */
-
-#shiny-tab-explorer .selectize-input{
-  max-height: 54px;
-}
-
-#shiny-tab-explorer .selectize-input:last-of-type{
-  height: 54px;
-}
-
-/* Validation Tab */
-
-#mmm_validation_row1, #mmm_validation_row2{
-  display:none
-}
-
-#mmm_validation_accept{
-  width:100%;
-}
-
-#mmm_validation_row1 .col-sm-3 input::after{
-  margin-right: 20px;
-}
-
-/* Decomp Tab */
-
-.icon-button{
-  color: #FFF;
-  position: relative;
-  top: 5px;
-  margin-bottom: 0;
-  padding: 5px;
-  float: right;
-  z-index: 10;
-  background: none;
-  border: none;
-  width: 30px;
-  text-overflow: clip;
-}
-.icon-button:hover{
-  background: rgba(0,0,0,.1);
-  color: #FFF;
-}
-
-#dl_mmm_decomp_mapping{
-  margin-right: 35px;
-  margin-left: 5px;
-}
-#dl_mmm_model_avm{
-  position: absolute;
-  top: 5px;
-  right: 34px;
-}
-
-#mmm_decomp_row1 .col-sm-9 .box:first-of-type{
-  background: #3c8dbc;
-}
-#mmm_decomp_project_sct{
-  background: #3c8dbc;
-  font-size: 16px;
-  line-height: 39px;
-}
-#mmm_decomp_project_sct .selectize-control{
-  margin: 0;
-}
-#mmm_decomp_project_sct .selectize-input{
-  overflow: visible;
-}
-
-#mmm_decomp_varmap{
-  padding: 0;
-}
-#mmm_decomp_mapping{
-  font-size: 12px;
-}
-
-#mmm_decomp_project .form-group{
-  margin-bottom: 48px;
-}
-#mmm_decomp_models .form-group{
-  margin-bottom: 31px;
-}
-
-#mmm_decomp_model_txt{
-  padding-bottom: 5px;
-  background: #FFF;
-}
-
-#render_mmm_decomp_eqn, #render_mmm_decomp_dia{
-  width: 100%;
-  position: absolute;
-  top: 40px;
-  left: 0;
 }
 
 /* Loading animation */

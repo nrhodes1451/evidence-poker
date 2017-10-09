@@ -1,18 +1,19 @@
 // GA Tracking Code Snippet
 
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+//(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+//(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+//m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+//})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-ga('create', 'UA-97473176-1', 'auto');
-ga('send', 'pageview');
+// ga('create', 'UA-97473176-1', 'auto');
+// ga('send', 'pageview');
 
 // End GA Tracking Code Snippet
 
 $(document).ready(function(){
-	var dur=12000;
-	var rot=7200;
+  $('#deck').click(function(){
+    $('#btn_deal').click();
+  });
 
 	// Loading bars
 	$('.plotlybars-bar').each(function(){
@@ -32,56 +33,6 @@ $(document).ready(function(){
     $(this).toggleClass('fa-download');
     $(this).toggleClass('fa-line-chart');
   });
-
-  // Refresh buttons
-	$('#mmm_dc_refresh').click(function(){
-	  ga('send', 'event', 'Refresh', 'mmm Datacomp');
-		var ele=$('#shiny-tab-dc .fa-refresh');
-		ele.animate({  borderSpacing: rot }, {
-		    step: function(now,fx) {
-		      $(this).css('-webkit-transform','rotate('+now+'deg)');
-		      $(this).css('-moz-transform','rotate('+now+'deg)');
-		      $(this).css('transform','rotate('+now+'deg)');
-		    },
-		    duration:dur
-		});
-	});
-	$('#mmm_exp_refresh').click(function(){
-	  ga('send', 'event', 'Refresh', 'mmm Explorer');
-		var ele=$('#shiny-tab-explorer .fa-refresh');
-		ele.animate({  borderSpacing: rot }, {
-		    step: function(now,fx) {
-		      $(this).css('-webkit-transform','rotate('+now+'deg)');
-		      $(this).css('-moz-transform','rotate('+now+'deg)');
-		      $(this).css('transform','rotate('+now+'deg)');
-		    },
-		    duration:dur
-		});
-	});
-	$('#mmm_val_refresh').click(function(){
-	  ga('send', 'event', 'Refresh', 'mmm Validation');
-		var ele=$('#shiny-tab-validation .fa-refresh');
-		ele.animate({  borderSpacing: rot }, {
-		    step: function(now,fx) {
-		      $(this).css('-webkit-transform','rotate('+now+'deg)');
-		      $(this).css('-moz-transform','rotate('+now+'deg)');
-		      $(this).css('transform','rotate('+now+'deg)');
-		    },
-		    duration:dur
-		});
-	});
-	$('#mmm_decomp_refresh').click(function(){
-	  ga('send', 'event', 'Refresh', 'mmm MMM');
-		var ele=$('#shiny-tab-mmm .fa-refresh');
-		ele.animate({  borderSpacing: rot }, {
-		    step: function(now,fx) {
-		      $(this).css('-webkit-transform','rotate('+now+'deg)');
-		      $(this).css('-moz-transform','rotate('+now+'deg)');
-		      $(this).css('transform','rotate('+now+'deg)');
-		    },
-		    duration:dur
-		});
-	});
 
 	// Keydown events
 
