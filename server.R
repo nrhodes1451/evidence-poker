@@ -1,7 +1,7 @@
 shinyServer(function(input, output, clientData, session){
 
   # Buttons disabled by default ----
-  addClass("btn-join-game", "disabled")
+  addClass("btn_join_game", "disabled")
   addClass("btn_create_game", "disabled")
   addClass("btn_deal", "disabled")
 
@@ -51,7 +51,7 @@ shinyServer(function(input, output, clientData, session){
           updateSelectInput(session, "sct-games",
             choices = names(poker_app$games),
             selected = names(poker_app$games) %>% first)
-          removeClass("btn-join-game", "disabled")
+          removeClass("btn_join_game", "disabled")
         }
         removeClass("btn_create_game", "disabled")
       }
@@ -76,6 +76,10 @@ shinyServer(function(input, output, clientData, session){
   # Admin ----
 
   # Game selection
+    observeEvent(input$btn_join_game, {
+    if(poker_app$create_game(input$txt_game_name)){
+    }
+  })
 
   # Game creation
   observeEvent(input$btn_create_game, {

@@ -137,6 +137,7 @@ game <- R6Class("game",
     id = NULL,
     chips = NULL,
     deck = NULL,
+    error_log = list(),
     host = NULL,
     players = NULL,
     state = NULL,
@@ -158,7 +159,7 @@ game <- R6Class("game",
 
     deal = function(){
       if(length(self$players)<2){
-        private$error_log$warning = "Waiting for players to join"
+        self$error_log$warning = "Waiting for players to join"
         return(FALSE)
       }
       self$state <- private$states[
@@ -197,8 +198,8 @@ game <- R6Class("game",
 
     add_player = function(player){
       self$timestamp <- now()
-      if(length(players)>9){
-        private$error_log$warning = "Table full"
+      if(length(self$players)>9){
+        self$error_log$warning = "Table full"
         return(FALSE)
       }
       if(self$state==private$states[1]){
@@ -207,7 +208,7 @@ game <- R6Class("game",
         return(TRUE)
       }
       else{
-        private$error_log$warning = "New players may only join between hands"
+        self$error_log$warning = "New players may only join between hands"
         return(FALSE)
       }
     },
@@ -219,7 +220,7 @@ game <- R6Class("game",
         return(TRUE)
       }
       else{
-        private$error_log$warning =
+        self$error_log$warning =
           paste(player$name, "will leave at the end of this hand")
         return(FALSE)
       }
@@ -227,7 +228,6 @@ game <- R6Class("game",
   ),
 
   private = list(
-    error_log = list(),
     states = c(
       "New Hand",
       "Pre Flop",
@@ -262,6 +262,7 @@ app <- R6Class("poker-app",
         # Username/Password verification
         if(username %in% names(self$users)){
           if(self$users[[username]]$password != password){
+            private$clear_log()
             private$error_log$warning <- "Username/Password mismatch"
             return(FALSE)
           }
@@ -269,7 +270,7 @@ app <- R6Class("poker-app",
           else{
             private$load_app()
             self$session_user <- self$users[[username]]
-            private$error_log <- list()
+            private$clear_log()
             private$error_log$message <- paste("Successfully logged in as",
                                             username)
             return(TRUE)
@@ -279,7 +280,7 @@ app <- R6Class("poker-app",
         else{
           user <- player$new(username, password)
           if(private$compare_users(self$session_user, user)){
-            private$error_log <- list()
+            private$clear_log()
             private$error_log$warning <- paste("Already loggied in as user:",
                                             username)
             return(FALSE)
@@ -288,7 +289,7 @@ app <- R6Class("poker-app",
           private$add_user(user)
           private$save_app()
           self$session_user <- user
-          private$error_log <- list()
+          private$clear_log()
           private$error_log$message <- paste("New user created:", username)
           return(TRUE)
         }
@@ -305,12 +306,12 @@ app <- R6Class("poker-app",
       private$load_app()
 
       if(id %in% names(self$games)){
-        private$error_log <- list()
+        private$clear_log()
         private$error_log$error <- "Game already exists."
         return(FALSE)
       }
       else if(self$session_user$in_game){
-        private$error_log <- list()
+        private$clear_log()
         private$error_log$error <- "Can't create game. Please leave the current game first."
         return(FALSE)
       }
@@ -320,6 +321,30 @@ app <- R6Class("poker-app",
         # Save changes
         private$save_app()
         return(TRUE)
+      }
+    },
+
+    join_game = function(id){
+      if(!(id %in% names(self$games))){
+        private$clear_log()
+        private$error_log$error <- "Game not found"
+        return(FALSE)
+      }
+      else if(self$session_user$in_game){
+        private$clear_log()
+        private$error_log$error <- "Please leave the current game first"
+        return(FALSE)
+      }
+      else{
+        private$load_app()
+        if(self$games[[id]]$add_player(self$session_user)){
+          private$save_app()
+          return(TRUE)
+        }
+        else{
+          private$error_log <- self$games[[id]]$error_log
+          return(TRUE)
+        }
       }
     },
 
@@ -367,6 +392,7 @@ app <- R6Class("poker-app",
 
     save_app = function(){
       self$timestamp = now()
+      self$users[[self$session_user$username]] <- self$session_user
       saveRDS(self, "app.RDS")
     },
 

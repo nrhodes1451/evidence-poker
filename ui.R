@@ -69,7 +69,7 @@ body <- dashboardBody(
             title="Join A Game",
             status = global_options$status_color,
             selectInput("sct-games", "Available games:", NULL),
-            actionButton("btn-join-game", "Join", class="disabled", NULL),
+            actionButton("btn_join_game", "Join", class="disabled", NULL),
             width = NULL,
             height=380,
             solidHeader = TRUE
