@@ -16,7 +16,12 @@ sidebar <- dashboardSidebar(
 
 body <- dashboardBody(
   useShinyjs(),
-  # HTML Tags ----
+  # Extend shinyjs ----
+  # Awaiting internet access to download V8 package
+  # extendShinyjs(text="shinyjs.goToTable = function(){
+  #   $(\"a[href='#shiny-tab-table']\").click();}"),
+
+    # HTML Tags ----
   tags$head(
     tags$script(src = "scripts.js"),
     tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
@@ -25,20 +30,35 @@ body <- dashboardBody(
   ),
 
   # Loading bars ----
-  # conditionalPanel(condition="check_shiny_busy()", id="loading",
-  #   tags$div(class="plotlybars-wrapper",
-  #     tags$div(class="plotlybars",
-  #       tags$div(class="plotlybars-bar b1"),
-  #       tags$div(class="plotlybars-bar b2"),
-  #       tags$div(class="plotlybars-bar b3"),
-  #       tags$div(class="plotlybars-bar b4"),
-  #       tags$div(class="plotlybars-bar b5"),
-  #       tags$div(class="plotlybars-bar b6"),
-  #       tags$div(class="plotlybars-bar b7")
-  #     ),
-  #   tags$div(class="plotlybars-text")
-  #   )
-  # ),
+  conditionalPanel(condition="check_shiny_busy()", id="loading",
+    tags$div(class="plotlybars-wrapper",
+      tags$div(class="plotlybars",
+        tags$div(class="plotlybars-bar b1"),
+        tags$div(class="plotlybars-bar b2"),
+        tags$div(class="plotlybars-bar b3"),
+        tags$div(class="plotlybars-bar b4"),
+        tags$div(class="plotlybars-bar b5"),
+        tags$div(class="plotlybars-bar b6"),
+        tags$div(class="plotlybars-bar b7")
+      ),
+    tags$div(class="plotlybars-text")
+    )
+  ),
+  # Login Screen ----
+  tags$div(id="login", class="overlay",
+    box(
+      title="Login",
+      status = global_options$status_color,
+      textInput("txt_login_id", NULL, placeholder="Username"),
+      passwordInput("txt_login_pw", NULL, placeholder="Password"),
+      actionButton("btn_login", "Log in"),
+      width = NULL,
+      solidHeader = TRUE
+    )
+  ),
+
+  # Error messages ----
+  htmlOutput("error_message"),
 
   tabItems(
   # Settings ----
@@ -49,7 +69,7 @@ body <- dashboardBody(
             title="Join A Game",
             status = global_options$status_color,
             selectInput("sct-games", "Available games:", NULL),
-            actionButton("btn-join-game", "Join", NULL),
+            actionButton("btn-join-game", "Join", class="disabled", NULL),
             width = NULL,
             height=380,
             solidHeader = TRUE

@@ -11,6 +11,7 @@
 // End GA Tracking Code Snippet
 
 $(document).ready(function(){
+
   $('#deck').click(function(){
     $('#btn_deal').click();
   });
@@ -39,18 +40,41 @@ $(document).ready(function(){
 	$("body").keydown(function(e){
     if(e.which == 27){
       // Escape
-      $('.error-notification-overlay').hide();
-      $('.shiny-notification-error').hide();
+      $('.notification-overlay').hide();
+      $('.shiny-notification').hide();
+    }
+  });
+
+  // Create game
+  $("#txt_game_name").keydown(function(e){
+    if(e.which == 13){
+      // Enter
+      $("#btn_create_game").click();
+    }
+  });
+
+  // Log in
+  $("#txt_login_pw").keydown(function(e){
+    if(e.which == 13){
+      // Enter
+      $("#btn_login").click();
     }
   });
 
   // Download GA Event Tracking
-	$(".shiny-download-link").on('click', function(){
-	  action = this.parentNode.parentNode.children[0].textContent.trim();
-	  label = $(this).text().trim();
-	  ga('send', 'event', 'Download', action, label);
-	});
+	//$(".shiny-download-link").on('click', function(){
+	//  action = this.parentNode.parentNode.children[0].textContent.trim();
+	// label = $(this).text().trim();
+	//  ga('send', 'event', 'Download', action, label);
+	//});
+
+	$("#txt_login_id").focus();
 });
+
+checkLogin = function(){
+  var loggedIn = false
+  return(loggedIn)
+}
 
 // Loading messages
 var shiny_busy = 0;

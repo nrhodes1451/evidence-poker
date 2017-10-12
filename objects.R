@@ -47,37 +47,45 @@ hand <- R6Class("hand",
 player <- R6Class("player",
   public = list(
     active = NULL,
-    chips = NULL,
     hand = NULL,
-    id = NULL,
-    name = NULL,
+    hosting = NULL,
+    username = NULL,
+    password = NULL,
     in_game = NULL,
     is_dealer = NULL,
     is_big_blind = NULL,
     is_small_blind = NULL,
+    timestamp = NULL,
 
     initialize = function(
-      id = NA,
-      name=NA,
-      chips=0,
-      active=FALSE,
+      username = NA,
+      password = NA,
+      active = FALSE,
+      hosting = FALSE,
       in_game = FALSE,
       is_dealer = FALSE,
       is_big_blind = FALSE,
       is_small_blind = FALSE){
+        self$username <- username
+        self$password <- password
         self$active <- active
-        self$id <- id
-        self$name <- name
-        self$chips <- chips
+        self$hosting <- hosting
+        self$in_game <- in_game
+        self$is_dealer <- is_dealer
+        self$is_big_blind <- is_big_blind
+        self$is_small_blind <- is_small_blind
         self$hand <- hand$new()
+        self$timestamp <- now()
     },
 
     fold = function(){
+      self$timestamp <- now()
       self$hand$fold()
       self$active <- FALSE
     },
 
     bid = function(c){
+      self$timestamp <- now()
       if(is.na(c) || as.integer(c)!=c ||
          self$chips < c) return(NULL)
       self$chips <- self$chips - c
@@ -85,7 +93,8 @@ player <- R6Class("player",
     },
 
     leave = function(){
-      self$handfold()
+      self$timestamp <- now()
+      self$hand$fold()
       self$active <- FALSE
       self$in_game <- FALSE
       self$is_dealer <- FALSE
@@ -126,32 +135,30 @@ deck <- R6Class("deck",
 game <- R6Class("game",
   public = list(
     id = NULL,
-    game = NULL,
+    chips = NULL,
     deck = NULL,
-    dealer = NULL,
+    host = NULL,
     players = NULL,
     state = NULL,
     table_cards = NULL,
-    error_log = NULL,
+    timestamp = NULL,
 
-    initialize = function(id, name, dealer){
+    initialize = function(id, host){
       self$id = id
-      self$name = name
-      self$dealer = dealer
-      dealer$in_game = TRUE
-      dealer$is_dealer = TRUE
+      self$host = host
+      host$in_game = TRUE
+      host$hosting = TRUE
 
       self$players = list()
       self$deck = deck$new()
       self$table_cards = hand$new()
       self$state = private$states[1]
-
-      self$error_log = list()
+      self$timestamp <- now()
     },
 
     deal = function(){
       if(length(self$players)<2){
-        self$error_log$warning = "Waiting for players to join"
+        private$error_log$warning = "Waiting for players to join"
         return(FALSE)
       }
       self$state <- private$states[
@@ -176,10 +183,12 @@ game <- R6Class("game",
       else{
         self$cleanup()
       }
+      self$timestamp <- now()
       return(self$state)
     },
 
     cleanup = function(){
+      self$timestamp <- now()
       self$table_cards <- hand$new()
       for(p in self$players){
         p$hand <- hand$new()
@@ -187,8 +196,9 @@ game <- R6Class("game",
     },
 
     add_player = function(player){
+      self$timestamp <- now()
       if(length(players)>9){
-        self$error_log$warning = "Table full"
+        private$error_log$warning = "Table full"
         return(FALSE)
       }
       if(self$state==private$states[1]){
@@ -197,18 +207,19 @@ game <- R6Class("game",
         return(TRUE)
       }
       else{
-        self$error_log$warning = "New players may only join between hands"
+        private$error_log$warning = "New players may only join between hands"
         return(FALSE)
       }
     },
 
     remove_player = function(player){
+      self$timestamp <- now()
       if(self$state==private$states[1]){
         self$players = self$players[-player]
         return(TRUE)
       }
       else{
-        self$error_log$warning =
+        private$error_log$warning =
           paste(player$name, "will leave at the end of this hand")
         return(FALSE)
       }
@@ -216,6 +227,7 @@ game <- R6Class("game",
   ),
 
   private = list(
+    error_log = list(),
     states = c(
       "New Hand",
       "Pre Flop",
@@ -229,45 +241,99 @@ game <- R6Class("game",
 app <- R6Class("poker-app",
   public = list(
     games = NULL,
-    users = NULL,
+    session_user = NULL,
     timestamp = NULL,
-    error_log = list(),
+    users = NULL,
 
     initialize = function(){
       if(file.exists("app.RDS")){
-
+        saved <- readRDS("app.RDS")
+        self$users <- saved$users
       }
       else{
-        self$games = list()
-        self$users = list()
-        self$timestamp = now()
+        self$users <- list()
       }
     },
 
-    save_app = function(){
-      self$timestamp = now()
-      saveRDS("app.RDS")
-    },
-    load_app = function(){
-      self$timestamp = now()
-      readRDS("app.RDS")
+    log_in = function(username, password){
+      # Error handling
+      if((class(username)=="character" && class(password)=="character") &&
+        (nchar(username)>0 && nchar(password)>0)){
+        # Username/Password verification
+        if(username %in% names(self$users)){
+          if(self$users[[username]]$password != password){
+            private$error_log$warning <- "Username/Password mismatch"
+            return(FALSE)
+          }
+          # Log in as user
+          else{
+            private$load_app()
+            self$session_user <- self$users[[username]]
+            private$error_log <- list()
+            private$error_log$message <- paste("Successfully logged in as",
+                                            username)
+            return(TRUE)
+          }
+        }
+        # Create new user
+        else{
+          user <- player$new(username, password)
+          if(private$compare_users(self$session_user, user)){
+            private$error_log <- list()
+            private$error_log$warning <- paste("Already loggied in as user:",
+                                            username)
+            return(FALSE)
+          }
+          private$load_app()
+          private$add_user(user)
+          private$save_app()
+          self$session_user <- user
+          private$error_log <- list()
+          private$error_log$message <- paste("New user created:", username)
+          return(TRUE)
+        }
+      }
+      else{
+        private$error_log$error <-
+        return(FALSE)
+      }
     },
 
-    create_game = function(id, user){
+    create_game = function(id){
+      if(is.null(self$session_user)) return(FALSE)
+      # Refresh the games list
+      private$load_app()
+
       if(id %in% names(self$games)){
-        self$error_log$error <- "Game already exists"
+        private$error_log <- list()
+        private$error_log$error <- "Game already exists."
+        return(FALSE)
       }
-      else if(user$in_game){
-        self$error_log$error <- "Can't create game. Please leave the current game first."
+      else if(self$session_user$in_game){
+        private$error_log <- list()
+        private$error_log$error <- "Can't create game. Please leave the current game first."
+        return(FALSE)
       }
       else{
-        new_game <- game$new(id, id, user)
+        new_game <- game$new(id, self$session_user)
         self$games[[id]] <- new_game
+        # Save changes
+        private$save_app()
+        return(TRUE)
       }
     },
+
     end_game = function(id){
+      if(is.null(self$session_user)) return(FALSE)
+      # Refresh the games list
+      private$load_app()
+
       if(!(id %in% names(self$games))){
-        self$error_log$error <- "Game not found"
+        private$error_log$error <- "Game not found"
+      }
+      else if(self$games[[id]]$host$username !=
+              self$session_user$username){
+        private$error_log$error <- "Only the host can end the game."
       }
       else{
         old_game <- self$games[[id]]
@@ -275,9 +341,63 @@ app <- R6Class("poker-app",
           player$leave()
         }
         self$games <- self$games[[-id]]
+
+        # Save changes
+        private$save_app()
+      }
+    },
+
+    print_log = function(){
+      if(length(private$error_log)>0){
+        return(private$error_log[1])
+        private$clear_log()
+      }
+      else{
+        return(NULL)
       }
     }
+  ),
 
+  private <- list(
+    error_log = list("error"="Not logged in"),
+
+    clear_log = function(){
+      private$error_log <- list()
+    },
+
+    save_app = function(){
+      self$timestamp = now()
+      saveRDS(self, "app.RDS")
+    },
+
+    load_app = function(){
+      if(file.exists("app.RDS")){
+        saved <- readRDS("app.RDS")
+        self$users <- saved$users
+        self$games <- saved$games
+        self$timestamp <- saved$timestamp
+      }
+      else return(NULL)
+    },
+
+    add_user = function(u){
+      if(class(u)[1] != "player") return(NULL)
+      users <- self$users
+      users[[u$username]] <- u
+      self$users <- users
+    },
+
+    compare_users = function(u, v){
+      if(is.null(u) || is.null(v)) return(FALSE)
+      return(u$username == v$username)
+    },
+
+    remove_user = function(u){
+      if(is.null(self$session_user)) return(FALSE)
+      if(class(u)[1] != "player") return(NULL)
+      users <- self$users[names(self$users)!=u$username]
+      self$users <- users
+    }
   )
 )
 
