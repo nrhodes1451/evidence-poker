@@ -12,6 +12,9 @@
 
 $(document).ready(function(){
 
+  $('a[href^="#shiny-tab"').addClass("hidden");
+  $('a[href="#shiny-tab-admin"').removeClass("hidden");
+
   $('#deck').click(function(){
     $('#btn_deal').click();
   });
@@ -37,11 +40,12 @@ $(document).ready(function(){
 
 	// Keydown events
 
+  // Hide notification window
 	$("body").keydown(function(e){
-    if(e.which == 27){
-      // Escape
-      $('.notification-overlay').hide();
-      $('.shiny-notification').hide();
+    if(e.which == 27 || e.which == 13){
+      // Escape or Enter
+      $('.notification-overlay').fadeOut();
+      $('.shiny-notification').fadeOut();
     }
   });
 
@@ -58,6 +62,8 @@ $(document).ready(function(){
     if(e.which == 13){
       // Enter
       $("#btn_login").click();
+      // Clear focus
+      $("#txt_login_pw").blur();
     }
   });
 

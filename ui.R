@@ -7,8 +7,9 @@ sidebar <- dashboardSidebar(
   hr(),
 
   sidebarMenu(id="tabs",
-    menuItem("Settings", tabName="settings", icon=icon("gears")),
-    menuItem("Table", tabName="table", icon=icon("table"))
+    menuItem("Admin", tabName="admin", icon=icon("gears")),
+    menuItem("Table", tabName="table", icon=icon("window-maximize")),
+    menuItem("Hand", tabName="hand", icon=icon("user-circle-o"))
   )
 )
 
@@ -16,12 +17,8 @@ sidebar <- dashboardSidebar(
 
 body <- dashboardBody(
   useShinyjs(),
-  # Extend shinyjs ----
-  # Awaiting internet access to download V8 package
-  # extendShinyjs(text="shinyjs.goToTable = function(){
-  #   $(\"a[href='#shiny-tab-table']\").click();}"),
 
-    # HTML Tags ----
+  # HTML Tags ----
   tags$head(
     tags$script(src = "scripts.js"),
     tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
@@ -30,7 +27,7 @@ body <- dashboardBody(
   ),
 
   # Loading bars ----
-  conditionalPanel(condition="check_shiny_busy()", id="loading",
+  tags$div(id="loading",
     tags$div(class="plotlybars-wrapper",
       tags$div(class="plotlybars",
         tags$div(class="plotlybars-bar b1"),
@@ -60,35 +57,27 @@ body <- dashboardBody(
   # Error messages ----
   htmlOutput("error_message"),
 
+  # Tabs ----
   tabItems(
-  # Settings ----
-    tabItem(tabName = "settings",
-      fluidRow(id="settings-row",
+    # Admin ----
+    tabItem(tabName = "admin",
+      fluidRow(id="admin-row",
         column(width=6,
           box(
-            title="Join A Game",
+            title="User",
             status = global_options$status_color,
-            selectInput("sct-games", "Available games:", NULL),
+            h4(textOutput("user_status")),
+            selectInput("sct_games", "Available games:", NULL),
             actionButton("btn_join_game", "Join", class="disabled", NULL),
-            width = NULL,
-            height=380,
-            solidHeader = TRUE
-          )
-        ),
-        column(width=6,
-          box(
-            title="Create A New Game",
-            status = global_options$status_color,
             textInput("txt_game_name", NULL, placeholder="Game Name"),
-            actionButton("btn_create_game", "Create Game"),
+            actionButton("btn_create_game", "Create Game", class="disabled"),
             width = NULL,
-            height=380,
             solidHeader = TRUE
           )
         )
       )
     ),
-  # Table ----
+    # Table ----
     tabItem(tabName = "table",
       fluidRow(id="table-row",
         column(width=12,
@@ -125,20 +114,23 @@ body <- dashboardBody(
                 src='img/cards/back.png')
             ),
             div(class="players players-bottom",
-              div(id='player1', class='player player-inactive',
+              div(id='player2', class='player player-inactive',
                 "p2", img(src='img/avatar.png')),
-              div(id='player1', class='player player-inactive',
+              div(id='player4', class='player player-inactive',
                 "p4", img(src='img/avatar.png')),
-              div(id='player1', class='player player-inactive',
+              div(id='player6', class='player player-inactive',
                 "p6", img(src='img/avatar.png')),
-              div(id='player1', class='player player-inactive',
+              div(id='player8', class='player player-inactive',
                 "p8", img(src='img/avatar.png')),
-              div(id='player1', class='player player-inactive',
+              div(id='player10', class='player player-inactive',
                 "p10", img(src='img/avatar.png'))
             )
           )
         )
       )
+    ),
+    # Hand ----
+    tabItem(tabName = "hand"
     )
   )
 )
