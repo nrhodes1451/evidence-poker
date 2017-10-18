@@ -37,6 +37,77 @@ shinyServer(function(input, output, clientData, session){
 
   output$mmm_error_message <- display_error(poker_app$print_log())
 
+  # Update UI ----
+  updateUI <- function(){
+    shinyjs::runjs(paste0("
+      $(\"#admin-row .box:eq(0) .box-title\").text(\"",poker_app$session_user$username,"\");"))
+
+    status <- poker_app$session_user$status()
+
+    if(status == "Hosting"){
+      shinyjs::runjs("$('a[href=\"#shiny-tab-table\"]').removeClass(\"hidden\");")
+    } else{
+      shinyjs::runjs("$('a[href=\"#shiny-tab-table\"]').addClass(\"hidden\");")
+    }
+    if(status == "In Game"){
+      shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"]').removeClass(\"hidden\");")
+    } else {
+      shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"]').addClass(\"hidden\");")
+    }
+  }
+
+  updateTable <- function(update_cards=TRUE, update_players=FALSE){
+    host <- poker_app$session_user
+    if(!host$hosting) return(NULL)
+    g <- poker_app$games[[poker_app$session_user$game]]
+    # Update Players
+    if(update_players){
+      shinyjs::runjs(paste0("$('a[href=\"#shiny-tab-table\"] span').text(\"",
+                            g$id,"\");"))
+      for(i in 1:10){
+        if(i %in% seq_along(g$players)){
+          p <- g$players[[i]]
+          shinyjs::runjs(paste0("
+            $('#player",i,"').removeClass('player-inactive');
+            $('#player",i," span').text('",p$username,"');"))
+        }
+        else{
+          shinyjs::runjs(paste0("
+            $('#player",i,"').addClass('player-inactive');"))
+        }
+      }
+    }
+    # Update Cards
+    if(update_cards){
+      cards <- g$table_cards$cards
+      if(g$state == "New Hand"){
+        shinyjs::runjs("
+          $('.card').addClass('card-hidden');
+          $('#deck').removeClass('card-hidden');
+          $('.card').attr('src','img/cards/back.png');")
+      }
+      else if(g$state == "Flop"){
+        shinyjs::runjs(paste0("
+          $('#flop1').removeClass('card-hidden');
+          $('#flop2').removeClass('card-hidden');
+          $('#flop3').removeClass('card-hidden');
+          $('#flop1').attr('src','",cards[[1]]$get_img(),"');
+          $('#flop2').attr('src','",cards[[2]]$get_img(),"');
+          $('#flop3').attr('src','",cards[[3]]$get_img(),"');"))
+      }
+      else if(g$state == "Turn"){
+        shinyjs::runjs(paste0("
+          $('#turn').removeClass('card-hidden');
+          $('#turn').attr('src','",cards[[4]]$get_img(),"');"))
+      }
+      else if(g$state == "River"){
+        shinyjs::runjs(paste0("
+          $('#river').removeClass('card-hidden');
+          $('#river').attr('src','",cards[[5]]$get_img(),"');"))
+      }
+    }
+  }
+
   # Login ----
   observeEvent(input$btn_login, {
     if(nchar(input$txt_login_id)>0 && nchar(input$txt_login_pw)>0){
@@ -55,6 +126,7 @@ shinyServer(function(input, output, clientData, session){
         removeClass("btn_create_game", "disabled")
       }
       updateUI()
+      updateTable(update_cards=FALSE, update_players=TRUE)
 
       output$user_status <- renderText(render_user_status())
       output$error_message <- display_error(poker_app$print_log())
@@ -75,6 +147,11 @@ shinyServer(function(input, output, clientData, session){
     }
   })
 
+  # Logout ----
+  observeEvent(input$btn_logout, {
+    poker_app$log_out()
+    session$reload()
+  })
   # Admin ----
 
   # User Status
@@ -97,7 +174,7 @@ shinyServer(function(input, output, clientData, session){
   observeEvent(input$btn_join_game, {
       if(poker_app$join_game(input$sct_games)){
         updateUI()
-        shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"').clic()")
+        shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"').click()")
       }
       else{
         output$error_message <- display_error(poker_app$print_log())
@@ -119,16 +196,11 @@ shinyServer(function(input, output, clientData, session){
 
   # Table ----
   observeEvent(input$btn_deal,{
-    if(is.null(poker_app$session_user)){
-      output$error_message <- display_error(poker_app$print_log())
+    if(poker_app$deal()){
+      updateTable()
     }
     else{
-      poker_app$games[[poker_app$session_user$game]]$deal()
-
-      if(length(poker_app$games[[poker_app$session_user$game]])>0){
-        output$error_message <-
-          display_error(poker_app$games[[poker_app$session_user$game]]$error_log)
-      }
+      display_error(poker_app$print_log())
     }
   })
 
@@ -136,23 +208,4 @@ shinyServer(function(input, output, clientData, session){
   # observeEvent(input$foo,{
   #   print("Test")
   # })
-
-  # Update UI
-  updateUI <- function(){
-    shinyjs::runjs(paste0("
-      $(\"#admin-row .box:eq(0) .box-title\").text(\"",poker_app$session_user$username,"\");"))
-
-    status <- poker_app$session_user$status()
-
-    if(status == "Hosting"){
-      shinyjs::runjs("$('a[href=\"#shiny-tab-table\"').removeClass(\"hidden\");")
-    } else{
-      shinyjs::runjs("$('a[href=\"#shiny-tab-table\"').addClass(\"hidden\");")
-    }
-    if(status == "In Game"){
-      shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"').removeClass(\"hidden\");")
-    } else {
-      shinyjs::runjs("$('a[href=\"#shiny-tab-hand\"').addClass(\"hidden\");")
-    }
-  }
 })

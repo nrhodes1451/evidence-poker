@@ -71,6 +71,7 @@ body <- dashboardBody(
             actionButton("btn_join_game", "Join", class="disabled", NULL),
             textInput("txt_game_name", NULL, placeholder="Game Name"),
             actionButton("btn_create_game", "Create Game", class="disabled"),
+            actionButton("btn_logout", "Log Out"),
             width = NULL,
             solidHeader = TRUE
           )
@@ -88,15 +89,15 @@ body <- dashboardBody(
             solidHeader = TRUE,
             div(class="players players-top",
               div(id='player1', class='player player-inactive',
-                img(src='img/avatar.png'), "p1"),
+                img(src='img/avatar.png'), span("p1")),
               div(id='player3', class='player player-inactive',
-                img(src='img/avatar.png'), "p3"),
+                img(src='img/avatar.png'), span("p3")),
               div(id='player5', class='player player-inactive',
-                img(src='img/avatar.png'), "p5"),
+                img(src='img/avatar.png'), span("p5")),
               div(id='player7', class='player player-inactive',
-                img(src='img/avatar.png'), "p7"),
+                img(src='img/avatar.png'), span("p7")),
               div(id='player9', class='player player-inactive',
-                img(src='img/avatar.png'), "p9")
+                img(src='img/avatar.png'), span("p9"))
             ),
             actionButton("btn_deal", ""),
             div(class="cards",
@@ -115,15 +116,15 @@ body <- dashboardBody(
             ),
             div(class="players players-bottom",
               div(id='player2', class='player player-inactive',
-                "p2", img(src='img/avatar.png')),
+                span("p2"), img(src='img/avatar.png')),
               div(id='player4', class='player player-inactive',
-                "p4", img(src='img/avatar.png')),
+                span("p4"), img(src='img/avatar.png')),
               div(id='player6', class='player player-inactive',
-                "p6", img(src='img/avatar.png')),
+                span("p6"), img(src='img/avatar.png')),
               div(id='player8', class='player player-inactive',
-                "p8", img(src='img/avatar.png')),
+                span("p8"), img(src='img/avatar.png')),
               div(id='player10', class='player player-inactive',
-                "p10", img(src='img/avatar.png'))
+                span("p10"), img(src='img/avatar.png'))
             )
           )
         )

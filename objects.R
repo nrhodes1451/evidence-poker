@@ -23,6 +23,13 @@ card <- R6Class("card",
 
         if(!is.logical(visible)) return(NULL)
         self$visible <- visible
+    },
+
+    get_img = function(){
+      if(self$visible){
+        return(paste0("img/cards/",self$value,self$suit,".svg"))
+      }
+      else return("img/cards/back.png")
     }
   )
 )
@@ -148,7 +155,8 @@ deck <- R6Class("deck",
     },
 
     deal = function(){
-      card <- self$cards[1]
+      card <- self$cards[[1]]
+      card$visible <- TRUE
       self$cards <- self$cards[-1]
       return(card)
     }
@@ -213,6 +221,7 @@ game <- R6Class("game",
 
     cleanup = function(){
       self$timestamp <- now()
+      self$deck <- deck$new()
       self$table_cards <- hand$new()
       for(p in self$players){
         p$hand <- hand$new()
@@ -319,6 +328,10 @@ app <- R6Class("poker-app",
       }
     },
 
+    log_out = function(){
+      self$session_user <- NULL
+    },
+
     create_game = function(id){
       if(is.null(self$session_user)) return(FALSE)
       # Refresh the games list
@@ -367,6 +380,21 @@ app <- R6Class("poker-app",
       }
     },
 
+    deal = function(){
+      if(!self$session_user$hosting){
+        private$error_log <- list("error"="No game found")
+        return(FALSE)
+      }
+      else{
+        d <- self$games[[self$session_user$game]]$deal()
+        if(d==FALSE){
+          private$error_log <- self$games[[self$session_user$game]]$error_log
+          return(FALSE)
+        }
+        else return(TRUE)
+      }
+    },
+
     end_game = function(id){
       if(is.null(self$session_user)) return(FALSE)
       # Refresh the games list
@@ -399,6 +427,13 @@ app <- R6Class("poker-app",
       else{
         return(NULL)
       }
+    },
+
+    reset = function(){
+      self$games <- list()
+      self$users <- list()
+      self$games %>% saveRDS("games.RDS")
+      self$users %>% saveRDS("users.RDS")
     }
   ),
 
