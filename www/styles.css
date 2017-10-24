@@ -54,12 +54,12 @@ input{
 
 /* Table and cards */
 
-#shiny-tab-table .box{
+#shiny-tab-table .box, #shiny-tab-hand .box{
   background-color: rgba(0,0,0,0);
   border: none;
 }
 
-#shiny-tab-table .box-header{
+#shiny-tab-table .box-header, #shiny-tab-hand .box-header{
   display: none;
 }
 
@@ -112,13 +112,33 @@ input{
 
 }
 
-.card-hidden{
+.card-hidden, .hand-card-hidden{
   visibility: hidden;
 }
 
 #deck{
   box-shadow: 0 0 5px 4px #444;
   cursor: pointer;
+}
+
+/* Hand */
+
+#hand-box{
+  text-align: center;
+}
+#hand-box .btn{
+  width: auto;
+  float: none;
+}
+#hand-box .cards{
+  margin-bottom: 25px;
+}
+.hand-card{
+  width: 49%;
+  max-width: 200px;
+}
+.hand-card-folded{
+  opacity: 0.3;
 }
 
 /* Sidebar */

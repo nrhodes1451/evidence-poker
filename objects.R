@@ -175,13 +175,10 @@ game <- R6Class("game",
     table_cards = NULL,
     timestamp = NULL,
 
-    initialize = function(id, host){
-      self$id = id
-      self$host = host
-      host$hosting = TRUE
-      host$game <- id
+    initialize = function(gameid, hostid){
+      self$id = gameid
+      self$host = hostid
 
-      self$players = list()
       self$deck = deck$new()
       self$table_cards = hand$new()
       self$state = private$states[1]
@@ -191,14 +188,18 @@ game <- R6Class("game",
     deal = function(){
       if(length(self$players)<2){
         self$error_log$warning = "Waiting for players to join"
-        return(FALSE)
+        return(NULL)
       }
+      return_val <- list()
       self$state <- private$states[
         (which(private$states == self$state)) %% 5 + 1]
+      return_val$state <- self$state
       if(self$state==private$states[2]){
+        return_val$hands <- list()
         for(p in self$players){
-          p$hand$deal_card(self$deck$deal())
-          p$hand$deal_card(self$deck$deal())
+          return_val$hands[[p]] <- c(
+            self$deck$deal(),
+            self$deck$deal())
         }
       }
       else if(self$state==private$states[3]){
@@ -216,7 +217,7 @@ game <- R6Class("game",
         self$cleanup()
       }
       self$timestamp <- now()
-      return(self$state)
+      return(return_val)
     },
 
     cleanup = function(){
@@ -228,15 +229,14 @@ game <- R6Class("game",
       }
     },
 
-    add_player = function(player){
+    add_player = function(name){
       self$timestamp <- now()
       if(length(self$players)>9){
         self$error_log$warning = "Table full"
         return(FALSE)
       }
       if(self$state==private$states[1]){
-        player$join_game(self$id)
-        self$players = c(self$players, player)
+        self$players = c(self$players, name)
         return(TRUE)
       }
       else{
@@ -278,7 +278,8 @@ app <- R6Class("poker-app",
     timestamp = NULL,
     users = NULL,
 
-    initialize = function(){
+    initialize = function(self_destruct=24){
+      private$self_destruct <- self_destruct
       private$load_app()
     },
 
@@ -298,6 +299,12 @@ app <- R6Class("poker-app",
             private$load_app()
             self$session_user <- self$users[[username]]
             self$session_user$timestamp <- now()
+
+            # Check that user's game is still active and update accordingly
+            if(!(self$session_user$game %in% names(self$games))){
+              self$session_user$leave()
+            }
+
             private$clear_log()
             private$error_log$message <- paste("Successfully logged in as",
                                             username)
@@ -348,7 +355,14 @@ app <- R6Class("poker-app",
         return(FALSE)
       }
       else{
-        new_game <- game$new(id, self$session_user)
+        # Update host user
+        self$session_user$hosting <- TRUE
+        self$session_user$active <- TRUE
+        self$session_user$game <- id
+
+        # Create new game
+        new_game <- game$new(id, self$session_user$username)
+
         self$games[[id]] <- new_game
         # Save changes
         private$save_app()
@@ -369,7 +383,8 @@ app <- R6Class("poker-app",
       }
       else{
         private$load_app()
-        if(self$games[[id]]$add_player(self$session_user)){
+        if(self$games[[id]]$add_player(self$session_user$username)){
+          self$session_user$join_game(id)
           private$save_app()
           return(TRUE)
         }
@@ -387,11 +402,29 @@ app <- R6Class("poker-app",
       }
       else{
         d <- self$games[[self$session_user$game]]$deal()
-        if(d==FALSE){
+        if(is.null(d)){
           private$error_log <- self$games[[self$session_user$game]]$error_log
           return(FALSE)
         }
-        else return(TRUE)
+        else{
+          # Deal Hands
+          if(!is.null(d$hands)){
+            for(i in seq_along(d$hands)){
+              p <- names(d$hands)[i]
+              self$users[[p]]$hand$initialize()
+              for(c in d$hands[[i]]){
+                self$users[[p]]$hand$deal_card(c)
+              }
+            }
+          }
+          else if(d$state=="New Hand"){
+            for(p in self$games[[self$session_user$game]]$players){
+              self$users[[p]]$hand$initialize()
+            }
+          }
+          private$save_app()
+          return(TRUE)
+        }
       }
     },
 
@@ -430,6 +463,9 @@ app <- R6Class("poker-app",
     },
 
     reset = function(){
+      # for(g in self$games){
+      #   g$
+      # }
       self$games <- list()
       self$users <- list()
       self$games %>% saveRDS("games.RDS")
@@ -438,6 +474,8 @@ app <- R6Class("poker-app",
   ),
 
   private <- list(
+    self_destruct = NULL,
+
     error_log = list("error"="Not logged in"),
 
     clear_log = function(){
@@ -446,7 +484,10 @@ app <- R6Class("poker-app",
 
     save_app = function(){
       self$timestamp = now()
+
       self$users[[self$session_user$username]] <- self$session_user
+      self$users[[self$session_user$username]]$timestamp <- self$timestamp
+
       self$users %>% saveRDS("users.RDS")
       self$games %>% saveRDS("games.RDS")
     },
@@ -455,7 +496,33 @@ app <- R6Class("poker-app",
       if(file.exists("users.RDS")){
         self$users <- readRDS("users.RDS")
         self$games <- readRDS("games.RDS")
-        self$timestamp <- file.info("users.RDS")$mtime
+        self$timestamp <- now()
+
+        # Remove inactive users and recreate list if necessary
+        self$users <- self$users %>% lapply(function(u){
+          if(self$timestamp-u$timestamp > private$self_destruct){
+                return(NULL)
+            }
+            else{
+                return(u)
+            }
+        }) %>% unlist
+        if(is.null(self$users)){
+          self$users <- list()
+        }
+
+        # Remove inactive games and recreate list if necessary
+        self$games <- self$games %>% lapply(function(g){
+          if(self$timestamp-g$timestamp > private$self_destruct){
+                return(NULL)
+            }
+            else{
+                return(g)
+            }
+        }) %>% unlist
+        if(is.null(self$games)){
+          self$games <- list()
+        }
       }
       else return(NULL)
     },

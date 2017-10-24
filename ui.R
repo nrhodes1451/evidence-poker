@@ -131,7 +131,23 @@ body <- dashboardBody(
       )
     ),
     # Hand ----
-    tabItem(tabName = "hand"
+    tabItem(tabName = "hand",
+      fluidRow(
+        column(width=12,
+          box(id="hand-box",
+            title="Hand",
+            status = global_options$status_color,
+            width = NULL,
+            solidHeader = TRUE,
+            div(class="cards",
+              img(id='hand1', class='card card-back hand-card hand-card-hidden',
+                src='img/cards/back.png'),
+              img(id='hand2', class='card card-back hand-card hand-card-hidden')
+            ),
+            actionButton("btn_hand_fold", "Fold")
+          )
+        )
+      )
     )
   )
 )
