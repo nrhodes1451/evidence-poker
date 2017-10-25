@@ -187,7 +187,7 @@ game <- R6Class("game",
 
     deal = function(){
       if(length(self$players)<2){
-        self$error_log$warning = "Waiting for players to join"
+        self$error_log$error = "Waiting for players to join"
         return(NULL)
       }
       return_val <- list()
@@ -278,8 +278,7 @@ app <- R6Class("poker-app",
     timestamp = NULL,
     users = NULL,
 
-    initialize = function(self_destruct=24){
-      private$self_destruct <- self_destruct
+    initialize = function(){
       private$load_app()
     },
 
@@ -301,8 +300,10 @@ app <- R6Class("poker-app",
             self$session_user$timestamp <- now()
 
             # Check that user's game is still active and update accordingly
-            if(!(self$session_user$game %in% names(self$games))){
-              self$session_user$leave()
+            if(!is.null(self$session_user$game)){
+              if(!(self$session_user$game %in% names(self$games))){
+                self$session_user$leave()
+              }
             }
 
             private$clear_log()
@@ -474,7 +475,7 @@ app <- R6Class("poker-app",
   ),
 
   private <- list(
-    self_destruct = NULL,
+    self_destruct = 1, # Days to record games & users
 
     error_log = list("error"="Not logged in"),
 
@@ -500,7 +501,8 @@ app <- R6Class("poker-app",
 
         # Remove inactive users and recreate list if necessary
         self$users <- self$users %>% lapply(function(u){
-          if(self$timestamp-u$timestamp > private$self_destruct){
+          if(difftime(self$timestamp, u$timestamp, units="hours") >
+             private$self_destruct){
                 return(NULL)
             }
             else{
@@ -513,8 +515,8 @@ app <- R6Class("poker-app",
 
         # Remove inactive games and recreate list if necessary
         self$games <- self$games %>% lapply(function(g){
-          if(self$timestamp-g$timestamp > private$self_destruct){
-                return(NULL)
+          if(difftime(self$timestamp, g$timestamp, units="hours") >
+             private$self_destruct){
             }
             else{
                 return(g)

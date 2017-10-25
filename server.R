@@ -35,8 +35,6 @@ shinyServer(function(input, output, clientData, session){
     }
   }
 
-  output$mmm_error_message <- display_error(poker_app$print_log())
-
   # Update UI ----
   updateUI <- function(){
     shinyjs::runjs(paste0("
@@ -57,6 +55,12 @@ shinyServer(function(input, output, clientData, session){
   }
 
   updateTable <- function(update_cards=TRUE, update_players=FALSE){
+
+    # Return null if no active game
+    if(is.null(poker_app$session_user$game)){
+      return(NULL)
+    }
+
     g <- poker_app$games[[poker_app$session_user$game]]
     # Update Players
     if(update_players){
@@ -166,9 +170,10 @@ shinyServer(function(input, output, clientData, session){
           removeClass("btn_join_game", "disabled")
         }
         removeClass("btn_create_game", "disabled")
+
+        updateUI()
+        updateTable(update_cards=TRUE, update_players=TRUE)
       }
-      updateUI()
-      updateTable(update_cards=TRUE, update_players=TRUE)
 
       output$user_status <- renderText(render_user_status())
       output$error_message <- display_error(poker_app$print_log())
@@ -242,7 +247,7 @@ shinyServer(function(input, output, clientData, session){
       updateTable()
     }
     else{
-      display_error(poker_app$print_log())
+      output$error_message <- display_error(poker_app$print_log())
     }
   })
 
